@@ -1,0 +1,6 @@
+# your scan history (cell IDs, signal, location-specific) stays local
+results/
+__pycache__/
+*.pyc
+.DS_Store
+.claude/
