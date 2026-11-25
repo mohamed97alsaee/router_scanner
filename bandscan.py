@@ -724,6 +724,8 @@ def run_scan(r: HiLink, opt: ScanOptions, log=print, stop=lambda: False, on_resu
         # 1. re-test earlier winners first, so today's numbers are comparable
         if opt.recheck_top or opt.only_recheck:
             top = [h for h in history if h["rating"] is not None][:max(opt.recheck_top, 3 if opt.only_recheck else 0)]
+            if opt.only_recheck and not top:
+                say("nothing to re-check yet — run a Quick or Full scan first")
             for h in top:
                 ant = h["antenna"] if (h["antenna"] in ANTENNA and orig_ant is not None) else None
                 cfg = {"spec": h["label"], "label": h["label"], "mode": h["mode"], "mask": h["mask"]}

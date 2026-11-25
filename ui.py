@@ -302,6 +302,34 @@ max-height:220px;overflow:auto;white-space:pre-wrap;margin-top:12px}
 .msg.ok{display:block;background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
 .full{grid-column:1/-1}
 #login{display:none}
+.hero{background:#0b0f14;color:#e8eaed;border-radius:18px;padding:22px 16px 18px;margin-bottom:14px;
+display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.hero-modes{display:inline-flex;background:#151b23;border-radius:99px;padding:4px;gap:2px}
+.hero-modes button{border:0;background:transparent;color:#9aa0a6;padding:7px 16px;border-radius:99px;
+font:inherit;font-size:14px;cursor:pointer}
+.hero-modes button.on{background:#22c55e;color:#04130a;font-weight:600}
+.hero-stage{position:relative;width:200px;height:200px;display:grid;place-items:center}
+.go{position:relative;width:168px;height:168px;border-radius:50%;border:0;cursor:pointer;
+background:#22c55e;color:#04130a;font:700 28px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+letter-spacing:.08em;box-shadow:0 10px 40px rgba(34,197,94,.35)}
+.go:active{transform:scale(.97)}
+.go .ring{position:absolute;inset:0;border-radius:50%;border:2px solid #22c55e;pointer-events:none;
+animation:pulse 3.2s ease-out infinite}
+.go .r2{animation-delay:1.6s}
+@keyframes pulse{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.45);opacity:0}}
+.spin{position:absolute;inset:0}
+.spin svg{width:100%;height:100%;animation:rot 1.6s linear infinite}
+.spin .trk{fill:none;stroke:#1e2733;stroke-width:8}
+.spin .arc{fill:none;stroke:#22c55e;stroke-width:8;stroke-linecap:round;stroke-dasharray:120 400}
+@keyframes rot{to{transform:rotate(360deg)}}
+.spin-n{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.spin-n b{font-size:52px;line-height:1;font-variant-numeric:tabular-nums}
+.spin-n span{font-size:13px;color:#9aa0a6;margin-top:4px}
+.hero-cur{min-height:20px;font-size:14px;color:#c9cdd2;max-width:100%;overflow-wrap:anywhere}
+.hero .chk{color:#c9cdd2}
+.hero-more{color:#60a5fa;font-size:14px;text-decoration:none}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){.go .ring,.spin svg{animation:none}}
 label.chk{display:flex;align-items:center;gap:6px;font-size:14px}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .seg button{border:0;background:transparent;color:var(--ink);padding:8px 12px;font:inherit;font-size:14px;cursor:pointer}
@@ -315,6 +343,19 @@ border-radius:6px;margin:10px 0;font-size:14px;display:none}
 <div class="sub" id="hostline">connecting…</div></div></header>
 <div class="msg" id="msg"></div>
 
+<div class="hero" id="hero">
+<div class="hero-modes" id="heromodes"><button data-m="quick">Quick</button><button data-m="full">Full</button><button data-m="recheck">Re-check</button></div>
+<div class="hero-stage">
+<button class="go" id="gobtn" onclick="startScan()" aria-label="Start scan"><span class="ring"></span><span class="ring r2"></span>START</button>
+<div class="spin" id="herospin" hidden><svg viewBox="0 0 120 120"><circle class="trk" cx="60" cy="60" r="52"/><circle class="arc" cx="60" cy="60" r="52"/></svg>
+<div class="spin-n"><b id="heron">0</b><span>tests done</span></div></div>
+</div>
+<div class="hero-cur" id="herocur"></div>
+<button class="btn danger" id="herostop" onclick="stopScan()" hidden>Stop &amp; restore</button>
+<label class="chk"><input type="checkbox" id="herospeed" checked autocomplete="off"> Speed test (slower, most accurate)</label>
+<a href="#details" class="hero-more" onclick="$('details').scrollIntoView({behavior:'smooth'});return false">More options ↓</a>
+</div>
+
 <div class="card" id="login" style="margin-bottom:14px">
 <h2>Router login</h2>
 <div class="sub" style="margin-bottom:8px">Reading the signal works without it, but scanning or changing bands needs a login.</div>
@@ -325,7 +366,7 @@ border-radius:6px;margin:10px 0;font-size:14px;display:none}
 <div class="sub" style="margin-top:8px">Kept in memory for this run only, never saved.</div>
 </div>
 
-<div class="grid">
+<div class="grid" id="details">
 <div class="card"><h2>Signal</h2>
 <div class="big">
 <div class="metric"><span id="l1">SINR</span><b id="sinr">–</b><div class="bar"><i id="sinrb"></i></div></div>
@@ -375,7 +416,7 @@ border-radius:6px;margin:10px 0;font-size:14px;display:none}
 <div class="row">
 <label class="chk"><input type="checkbox" id="g3"> Include 3G / H+ and Auto</label>
 <label class="chk"><input type="checkbox" id="recheck" checked> Re-test previous best 3</label>
-<label class="chk"><input type="checkbox" id="speed" checked> Speed test (slower, most accurate)</label>
+<label class="chk"><input type="checkbox" id="speed" checked autocomplete="off"> Speed test (slower, most accurate)</label>
 <label class="chk">Settle <input id="settle" type="number" value="20" min="5" max="90" style="width:70px"> s</label>
 </div>
 <div class="row" style="margin-top:12px">
@@ -433,9 +474,17 @@ function chips(){
  $('candchips').style.display=mode==='quick'?'flex':'none';
  $('candchips').innerHTML=all.map(c=>`<button class="chip ${cands.has(c)?'on':''}" onclick="togc('${c}')">${bandLabel(c)}</button>`).join('');
  $('modehint').textContent=HINT[mode];
- document.querySelectorAll('#modeseg button').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));
+ document.querySelectorAll('#modeseg button,#heromodes button').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));
 }
-document.querySelectorAll('#modeseg button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;chips()});
+document.querySelectorAll('#modeseg button,#heromodes button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;chips()});
+$('herospeed').onchange=()=>{$('speed').checked=$('herospeed').checked};
+$('speed').onchange=()=>{$('herospeed').checked=$('speed').checked};
+function heroUpdate(s){$('gobtn').hidden=s.running;$('herospin').hidden=!s.running;$('herostop').hidden=!s.running;
+ $('heron').textContent=s.done||0;const best=s.results.find(r=>r.key===s.best);
+ $('herocur').textContent=s.running?(s.current?'Testing: '+s.current:'Starting…'):s.error?'Error: '+s.error:
+  best?(s.applied?`Best: ${best.label} [${best.antenna||'-'}] · score ${best.score} · applied`:
+   `Stopped — original settings restored · best so far: ${best.label} [${best.antenna||'-'}]`):
+  s.file&&!s.results.length?(mode==='recheck'?'Nothing to re-check yet — run Quick or Full first':'Nothing was tested'):''}
 function tog(b){sel.has(b)?sel.delete(b):sel.add(b);chips()}
 function togc(c){cands.has(c)?cands.delete(c):cands.add(c);chips()}
 function preset(a){sel=new Set(a);chips();applyBands()}
@@ -493,7 +542,7 @@ function renderResults(results,bestKey,banner){
  const b=$('banner');b.style.display=banner?'block':'none';b.innerHTML=banner||'';
 }
 async function scanPoll(){const s=await api('/api/scan');
- $('startbtn').disabled=s.running;$('stopbtn').disabled=!s.running;
+ $('startbtn').disabled=s.running;$('stopbtn').disabled=!s.running;heroUpdate(s);
  $('scanstate').textContent=s.running?`Testing #${s.done}: ${s.current||'…'}`:(s.error?'Error: '+s.error:s.applied?'Done — best config applied':s.file?'Done — original settings restored':'');
  $('prog').classList.toggle('busy',s.running);$('progbar').style.width=s.running?'30%':(s.file?'100%':'0');
  if(!viewing){const best=s.results.find(r=>r.key===s.best);
@@ -530,6 +579,7 @@ async function debugPoll(){const d=await api('/api/debug');$('dbgbtn').disabled=
 function copyDebug(){if(!window._dbg)return msg('Run the test first');
  navigator.clipboard.writeText(JSON.stringify(window._dbg,null,2)).then(()=>msg('Debug log copied','ok'),()=>msg('Copy failed — select the log text instead'))}
 (async()=>{cfg=await api('/api/config');$('host').value=cfg.host.replace('http://','');
+ $('speed').checked=$('herospeed').checked=true;
  cands=new Set(cfg.defaults);chips();poll();setInterval(poll,2000);scanPoll();loadHistory();debugPoll()})();
 </script></body></html>"""
 
