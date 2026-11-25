@@ -375,7 +375,7 @@ border-radius:6px;margin:10px 0;font-size:14px;display:none}
 <div class="row">
 <label class="chk"><input type="checkbox" id="g3"> Include 3G / H+ and Auto</label>
 <label class="chk"><input type="checkbox" id="recheck" checked> Re-test previous best 3</label>
-<label class="chk"><input type="checkbox" id="speed"> Speed test (slower, most accurate)</label>
+<label class="chk"><input type="checkbox" id="speed" checked> Speed test (slower, most accurate)</label>
 <label class="chk">Settle <input id="settle" type="number" value="20" min="5" max="90" style="width:70px"> s</label>
 </div>
 <div class="row" style="margin-top:12px">
